@@ -2,7 +2,6 @@ import { type Context, Hono, Next, serveStatic } from "lume/cms/deps/hono.ts";
 import authRoutes from "lume/cms/core/routes/auth.ts";
 import { dispatch } from "lume/cms/core/utils/event.ts";
 import { asset, getPath } from "lume/cms/core/utils/path.ts";
-import { Git, Options as GitOptions } from "lume/cms/core/git.ts";
 import { relative } from "lume/cms/deps/std.ts";
 import type Site from "lume/core/site.ts";
 import type Cms from "lume/cms/core/cms.ts";
@@ -17,7 +16,7 @@ export const defaults: Omit<Options, "site" | "cms"> = {
   basePath: "/admin",
 };
 
-export default async function lume(userOptions?: Options): Promise<Hono> {
+export default async function adapter(userOptions?: Options): Promise<Hono> {
   const options = {
     ...defaults,
     ...userOptions,
@@ -27,17 +26,6 @@ export default async function lume(userOptions?: Options): Promise<Hono> {
 
   // Enable drafts previews in the CMS
   Deno.env.set("LUME_DRAFTS", "true");
-
-  const git = Deno.env.get("LUMECMS_GIT");
-
-  if (git) {
-    const gitOption = JSON.parse(git) as GitOptions;
-
-    cms.versionManager = new Git({
-      root: cms.options.root,
-      ...gitOption,
-    });
-  }
 
   await site.build();
 
