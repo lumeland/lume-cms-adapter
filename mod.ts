@@ -77,11 +77,9 @@ export function getServeHandler(
     const serve = import.meta.resolve("./src/serve.ts");
     const command = new Deno.Command(Deno.execPath(), {
       args: [
-        "serve",
-        "--allow-all",
-        "--unstable-kv",
+        "task",
+        "cms",
         `--port=${port}`,
-        `--host=${location.hostname}`,
         serve,
         `--location=${location.origin}`,
       ],
