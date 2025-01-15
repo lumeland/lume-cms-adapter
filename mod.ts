@@ -72,15 +72,19 @@ export function getServeHandler(
       return;
     }
     console.log(`Start proxied server on port ${port}`);
-    const serve = import.meta.resolve("./src/serve.ts");
+    const code = await (await fetch(import.meta.resolve("./adapter.ts")))
+      .text();
+
     const command = new Deno.Command(Deno.execPath(), {
       args: [
-        "task",
-        "cms",
+        "eval",
+        "--unstable-kv",
+        code,
+        "--",
         `--port=${port}`,
-        serve,
+        `--hostname=${location.hostname}`,
         `--location=${location.origin}`,
-      ]
+      ],
     });
 
     process = {

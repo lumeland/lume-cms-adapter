@@ -131,3 +131,20 @@ export default async function adapter(userOptions?: Options): Promise<Hono> {
 
   return app;
 }
+
+if (import.meta.main) {
+  const { default: site } = await import(Deno.cwd() + "/_config.ts") as {
+    default: Site;
+  };
+  const { default: cms } = await import(Deno.cwd() + "/_cms.ts") as {
+    default: Cms;
+  };
+
+  const handler = await adapter({ site, cms });
+  const location = site.options.location;
+
+  Deno.serve({
+    port: parseInt(location.port),
+    hostname: location.hostname,
+  }, handler.fetch);
+}
