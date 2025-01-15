@@ -1,4 +1,4 @@
-console.log(Deno.cwd());
+console.log(Deno.cwd(), location);
 
 const { default: site } = await import(Deno.cwd() + "/_config.ts");
 const { default: cms } = await import(Deno.cwd() + "/_cms.ts");
