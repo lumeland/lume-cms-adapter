@@ -83,6 +83,7 @@ export function getServeHandler(
         serve,
         `--location=${location.origin}`,
       ],
+      cwd: Deno.cwd(),
     });
 
     process = {
