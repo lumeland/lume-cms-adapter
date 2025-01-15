@@ -24,7 +24,7 @@ export function getServeHandler(
 
     // Start the server on the first request
     if (!process?.ready) {
-      startServer(url.origin);
+      startServer(url);
       return new Response(
         `<html><head><title>Please wait...</title><meta http-equiv="refresh" content="2">
         <style>body{font-family:sans-serif;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh}</style>
@@ -67,12 +67,11 @@ export function getServeHandler(
   };
 
   // Start the server
-  async function startServer(location: string): Promise<void> {
+  async function startServer(location: URL): Promise<void> {
     if (process?.ready === false) {
       return;
     }
-
-    console.log("Starting proxy server");
+    console.log(`Start proxied server on port ${port}`);
     const serve = import.meta.resolve("./src/serve.ts");
     const command = new Deno.Command(Deno.execPath(), {
       args: [
@@ -80,8 +79,9 @@ export function getServeHandler(
         "--allow-all",
         "--unstable-kv",
         `--port=${port}`,
+        `--host=${location.hostname}`,
         serve,
-        `--location=${location}`,
+        `--location=${location.origin}`,
       ],
     });
 
@@ -94,7 +94,7 @@ export function getServeHandler(
     let timeout = 0;
     while (true) {
       try {
-        await fetch(`http://0.0.0.0:${port}`);
+        await fetch(`${location.protocol}//${location.hostname}:${port}`);
         process.ready = true;
         break;
       } catch {
@@ -104,7 +104,9 @@ export function getServeHandler(
     }
 
     // Start the WebSocket server
-    const socket = new WebSocket(`ws://0.0.0.0:${port}${basePath}/_socket`);
+    const socket = new WebSocket(
+      `ws://${location.hostname}:${port}${basePath}/_socket`,
+    );
 
     socket.onmessage = (event) => {
       for (const socket of sockets) {
