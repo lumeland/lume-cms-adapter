@@ -1,5 +1,3 @@
-import { toFileUrl } from "jsr:@std/path/to-file-url";
-
 export interface Options {
   port: number;
   basePath: string;
