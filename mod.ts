@@ -72,6 +72,7 @@ export function getServeHandler(
       return;
     }
     console.log(`Start proxied server on port ${port}`);
+    console.log(Deno.cwd());
     const serve = import.meta.resolve("./src/serve.ts");
     const command = new Deno.Command(Deno.execPath(), {
       args: [
