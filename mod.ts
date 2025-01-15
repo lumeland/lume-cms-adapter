@@ -82,8 +82,7 @@ export function getServeHandler(
         `--port=${port}`,
         serve,
         `--location=${location.origin}`,
-      ],
-      cwd: toFileUrl(Deno.cwd()).href,
+      ]
     });
 
     process = {
