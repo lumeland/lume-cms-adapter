@@ -8,6 +8,9 @@ export const defaults: Options = {
   basePath: "/admin",
 };
 
+// We need to eval the code instead of running it to keep the same cwd
+const code = await (await fetch(import.meta.resolve("./adapter.ts"))).text();
+
 export function getServeHandler(
   userOptions?: Partial<Options>,
 ): Deno.ServeHandler {
@@ -71,12 +74,8 @@ export function getServeHandler(
     if (process?.ready === false) {
       return;
     }
+
     console.log(`Start proxied server on port ${port}`);
-
-    // We need to eval the code to keep the same cwd
-    const code = await (await fetch(import.meta.resolve("./adapter.ts")))
-      .text();
-
     const command = new Deno.Command(Deno.execPath(), {
       args: [
         "eval",
