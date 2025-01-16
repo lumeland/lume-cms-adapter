@@ -72,6 +72,8 @@ export function getServeHandler(
       return;
     }
     console.log(`Start proxied server on port ${port}`);
+
+    // We need to eval the code to keep the same cwd
     const code = await (await fetch(import.meta.resolve("./adapter.ts")))
       .text();
 
