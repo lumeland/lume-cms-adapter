@@ -1,8 +1,10 @@
+import { parseArgs } from "jsr:@std/cli@1.0.8/parse-args";
 import { type Context, Hono, Next, serveStatic } from "lume/cms/deps/hono.ts";
 import authRoutes from "lume/cms/core/routes/auth.ts";
 import { dispatch } from "lume/cms/core/utils/event.ts";
 import { asset, getPath } from "lume/cms/core/utils/path.ts";
 import { relative } from "lume/cms/deps/std.ts";
+
 import type Site from "lume/core/site.ts";
 import type Cms from "lume/cms/core/cms.ts";
 
@@ -133,6 +135,17 @@ export default async function adapter(userOptions?: Options): Promise<Hono> {
 }
 
 if (import.meta.main) {
+  const flags = parseArgs(
+    parseArgs(Deno.args, { "--": true })["--"],
+    {
+      string: ["port", "hostname"],
+      default: {
+        port: "3000",
+        hostname: "0.0.0.0",
+      },
+    },
+  );
+
   const { default: site } = await import(Deno.cwd() + "/_config.ts") as {
     default: Site;
   };
@@ -141,10 +154,9 @@ if (import.meta.main) {
   };
 
   const handler = await adapter({ site, cms });
-  const location = site.options.location;
 
   Deno.serve({
-    port: parseInt(location.port),
-    hostname: location.hostname,
+    port: parseInt(flags.port),
+    hostname: flags.hostname,
   }, handler.fetch);
 }

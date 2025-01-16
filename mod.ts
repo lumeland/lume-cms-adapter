@@ -1,21 +1,20 @@
-export interface Options {
-  port: number;
-  basePath: string;
-}
-
-export const defaults: Options = {
-  port: 3000,
-  basePath: "/admin",
-};
+import { parseArgs } from "jsr:@std/cli@1.0.8/parse-args";
 
 // We need to eval the code instead of running it to keep the same cwd
 const code = await (await fetch(import.meta.resolve("./adapter.ts"))).text();
 
-export function getServeHandler(
-  userOptions?: Partial<Options>,
-): Deno.ServeHandler {
-  const options = { ...defaults, ...userOptions };
-  const { port, basePath } = options;
+// Capture flags to pass to the server
+const flags = parseArgs(Deno.args, {
+  "--": true,
+  string: ["port", "adminPath"],
+  default: {
+    port: "3000",
+    adminPath: "/admin",
+  },
+});
+
+export function getServeHandler(): Deno.ServeHandler {
+  const { port, adminPath } = flags;
 
   let process: { process: Deno.ChildProcess; ready: boolean } | undefined;
   let ws: WebSocket | undefined;
@@ -44,7 +43,7 @@ export function getServeHandler(
     timeout = setTimeout(closeServer, 2 * 60 * 60 * 1000);
 
     // Forward the request to the server
-    url.port = port.toString();
+    url.port = port;
 
     const headers = new Headers(request.headers);
     headers.set("host", url.host);
@@ -76,15 +75,26 @@ export function getServeHandler(
     }
 
     console.log(`Start proxied server on port ${port}`);
+    console.log([
+      "--",
+      ...flags["--"],
+      // Server flags
+      "--",
+      `--port=${port}`,
+      `--hostname=${location.hostname}`,
+    ]);
     const command = new Deno.Command(Deno.execPath(), {
       args: [
         "eval",
         "--unstable-kv",
         code,
+        // Lume flags
+        "--",
+        ...flags["--"],
+        // Server flags
         "--",
         `--port=${port}`,
         `--hostname=${location.hostname}`,
-        `--location=${location.origin}`,
       ],
     });
 
@@ -108,7 +118,7 @@ export function getServeHandler(
 
     // Start the WebSocket server
     const socket = new WebSocket(
-      `ws://${location.hostname}:${port}${basePath}/_socket`,
+      `ws://${location.hostname}:${port}${adminPath}/_socket`,
     );
 
     socket.onmessage = (event) => {
