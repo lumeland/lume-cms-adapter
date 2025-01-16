@@ -75,14 +75,6 @@ export function getServeHandler(): Deno.ServeHandler {
     }
 
     console.log(`Start proxied server on port ${port}`);
-    console.log([
-      "--",
-      ...flags["--"],
-      // Server flags
-      "--",
-      `--port=${port}`,
-      `--hostname=${location.hostname}`,
-    ]);
     const command = new Deno.Command(Deno.execPath(), {
       args: [
         "eval",
