@@ -7,16 +7,20 @@ const code = await (await fetch(import.meta.resolve("./adapter.ts"))).text();
 const flags = parseArgs(Deno.args, {
   "--": true,
   string: ["port", "adminPath"],
+  boolean: ["show-terminal"],
   default: {
     port: "3000",
     adminPath: "/admin",
+    showTerminal: false,
   },
 });
 
 export function getServeHandler(): Deno.ServeHandler {
-  const { port, adminPath } = flags;
+  const { port, adminPath, "show-terminal": showTerminal } = flags;
 
-  let process: { process: Deno.ChildProcess; ready: boolean } | undefined;
+  let process:
+    | { process: Deno.ChildProcess; ready: boolean; error: boolean }
+    | undefined;
   let ws: WebSocket | undefined;
   let timeout: number | undefined;
   const sockets = new Set<WebSocket>();
@@ -26,16 +30,46 @@ export function getServeHandler(): Deno.ServeHandler {
 
     // Start the server on the first request
     if (!process?.ready) {
-      startServer(url);
-      return new Response(
-        `<html><head><title>Please wait...</title><meta http-equiv="refresh" content="2">
-        <style>body{font-family:sans-serif;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh}</style>
-        </head><body><p>Please wait...</p></body></html>`,
-        {
-          status: 200,
-          headers: { "content-type": "text/html" },
+      const body = new BodyStream();
+      body.message(`
+        <html><head><title>Starting...</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script>setInterval(() => window.scroll({top:document.documentElement.scrollHeight,behavior:"instant"}), 10);</script>
+        <style>
+        body {
+          font-family: sans-serif;
+          margin: 0;
+          padding: 2rem;
+          box-sizing: border-box;
+          display: grid;
+          grid-template-columns: minmax(0, 800px);
+          align-content: center;
+          justify-content: center;
+          min-height: 100vh
+        }
+        pre {
+          overflow-x: auto;
+        }
+        </style></head><body><pre><samp>Starting LumeCMS...`);
+
+      startServer(url, body).then(() => {
+        if (process?.error) {
+          body.message("Error starting the server");
+          body.close();
+          process = undefined;
+          return;
+        }
+        body.message("</pre></samp><script>location.reload()</script>");
+        body.close();
+      });
+      return new Response(body.body, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html",
+          "Transfer-Encoding": "chunked",
         },
-      );
+      });
     }
 
     // Close the server after 2 hours of inactivity
@@ -53,6 +87,14 @@ export function getServeHandler(): Deno.ServeHandler {
       return proxyWebSocket(request);
     }
 
+    console.log(`Proxy request to ${url}`);
+    console.log({
+      redirect: "manual",
+      headers,
+      method: request.method,
+      body: request.body,
+    });
+
     const response = await fetch(url, {
       redirect: "manual",
       headers,
@@ -69,13 +111,17 @@ export function getServeHandler(): Deno.ServeHandler {
   };
 
   // Start the server
-  async function startServer(location: URL): Promise<void> {
+  async function startServer(location: URL, body: BodyStream): Promise<void> {
     if (process?.ready === false) {
       return;
     }
 
+    body.message("Starting CMS...");
     console.log(`Start proxied server on port ${port}`);
+
     const command = new Deno.Command(Deno.execPath(), {
+      stdout: "piped",
+      stderr: "piped",
       args: [
         "eval",
         "--unstable-kv",
@@ -93,11 +139,29 @@ export function getServeHandler(): Deno.ServeHandler {
     process = {
       process: command.spawn(),
       ready: false,
+      error: false,
     };
+
+    process.process.status.then((status) => {
+      if (status.success === false) {
+        process!.error = true;
+      }
+    });
+
+    if (showTerminal) {
+      body.readStd(process.process.stdout);
+      body.readStd(process.process.stderr);
+    }
 
     // Wait for the server to start
     let timeout = 0;
     while (true) {
+      if (process.error) {
+        return;
+      }
+
+      body.message("Waiting for server");
+
       try {
         await fetch(`${location.protocol}//${location.hostname}:${port}`);
         process.ready = true;
@@ -160,3 +224,56 @@ export function getServeHandler(): Deno.ServeHandler {
 export default {
   fetch: getServeHandler(),
 };
+
+class BodyStream {
+  #timer: number | undefined = undefined;
+  #chunks: string[] = [];
+  #body: ReadableStream | undefined;
+  #closed = false;
+
+  get body() {
+    return this.#body;
+  }
+
+  constructor() {
+    this.#body = new ReadableStream({
+      start: (controller) => {
+        this.#timer = setInterval(() => {
+          while (this.#chunks.length > 0) {
+            const message = this.#chunks.shift();
+            controller.enqueue(new TextEncoder().encode(message));
+          }
+          if (this.#closed) {
+            clearInterval(this.#timer);
+            controller.close();
+          }
+        }, 100);
+      },
+      cancel: () => {
+        this.close();
+      },
+    });
+  }
+
+  readStd(stream: ReadableStream) {
+    stream.pipeThrough(new TextDecoderStream()).pipeTo(
+      new WritableStream({
+        write: (chunk) => {
+          chunk = chunk.replaceAll(
+            /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+            "",
+          );
+          this.#chunks.push(chunk);
+        },
+      }),
+    );
+  }
+
+  message(message: string) {
+    this.#chunks.push(message + "\n");
+  }
+
+  close() {
+    this.#closed = true;
+  }
+}

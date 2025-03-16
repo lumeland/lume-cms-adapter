@@ -26,6 +26,13 @@ deno serve -Ar https://cdn.jsdelivr.net/gh/lumeland/lume-cms-adapter@latest/mod.
 # reverse proxy (8000) <-- on demand server (8888)
 ```
 
+Use `--show-terminal` to show the terminal output of the Lume build at the cold
+start:
+
+```sh
+deno serve -Ar https://cdn.jsdelivr.net/gh/lumeland/lume-cms-adapter@latest/mod.ts --show-terminal
+```
+
 Use `--` to pass arguments to LumeCMS. For example, if your public URL is
 `https://example.com` and want to configure the Lume site with this location:
 
