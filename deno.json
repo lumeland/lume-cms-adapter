@@ -1,8 +1,14 @@
 {
   "lock": false,
   "imports": {
-    "lume/": "https://deno.land/x/lume@v2.5.0/",
-    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@v0.9.0/"
+    "lume/": "https://deno.land/x/lume@v2.5.3/",
+    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.10.2/"
+  },
+  "tasks": {
+    "update-deps": {
+      "description": "Update dependencies",
+      "command": "deno run -A --quiet 'https://deno.land/x/nudd@v0.2.9/cli.ts' update *.ts deno.json"
+    }
   },
   "exclude": [
     "CHANGELOG.md"

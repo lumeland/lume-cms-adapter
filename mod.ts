@@ -1,4 +1,4 @@
-import { parseArgs } from "jsr:@std/cli@1.0.8/parse-args";
+import { parseArgs } from "jsr:@std/cli@1.0.14/parse-args";
 
 // We need to eval the code instead of running it to keep the same cwd
 const code = await (await fetch(import.meta.resolve("./adapter.ts"))).text();
@@ -86,14 +86,6 @@ export function getServeHandler(): Deno.ServeHandler {
     if (headers.get("upgrade") === "websocket") {
       return proxyWebSocket(request);
     }
-
-    console.log(`Proxy request to ${url}`);
-    console.log({
-      redirect: "manual",
-      headers,
-      method: request.method,
-      body: request.body,
-    });
 
     const response = await fetch(url, {
       redirect: "manual",
@@ -239,9 +231,13 @@ class BodyStream {
     this.#body = new ReadableStream({
       start: (controller) => {
         this.#timer = setInterval(() => {
-          while (this.#chunks.length > 0) {
-            const message = this.#chunks.shift();
-            controller.enqueue(new TextEncoder().encode(message));
+          try {
+            while (this.#chunks.length > 0) {
+              const message = this.#chunks.shift();
+              controller.enqueue(new TextEncoder().encode(message));
+            }
+          } catch {
+            // The stream controller cannot close or enqueue
           }
           if (this.#closed) {
             clearInterval(this.#timer);

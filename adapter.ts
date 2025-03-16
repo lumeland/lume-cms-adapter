@@ -1,4 +1,4 @@
-import { parseArgs } from "jsr:@std/cli@1.0.8/parse-args";
+import { parseArgs } from "jsr:@std/cli@1.0.14/parse-args";
 import { type Context, Hono, Next, serveStatic } from "lume/cms/deps/hono.ts";
 import authRoutes from "lume/cms/core/routes/auth.ts";
 import { dispatch } from "lume/cms/core/utils/event.ts";
