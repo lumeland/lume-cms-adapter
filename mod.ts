@@ -140,6 +140,8 @@ export function getServeHandler(): Deno.ServeHandler {
       }
     });
 
+    body.message("Building the Lume site...");
+
     if (showTerminal) {
       body.readStd(process.process.stdout);
       body.readStd(process.process.stderr);
@@ -152,7 +154,7 @@ export function getServeHandler(): Deno.ServeHandler {
         return;
       }
 
-      body.message("Waiting for server");
+      body.chunk(".");
 
       try {
         await fetch(`${location.protocol}//${location.hostname}:${port}`);
@@ -255,18 +257,23 @@ class BodyStream {
     stream.pipeThrough(new TextDecoderStream()).pipeTo(
       new WritableStream({
         write: (chunk) => {
+          // Remove ANSI escape codes (https://stackoverflow.com/questions/25245716/remove-all-ansi-colors-styles-from-strings)
           chunk = chunk.replaceAll(
             /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
             "",
           );
-          this.#chunks.push(chunk);
+          this.chunk(chunk);
         },
       }),
     );
   }
 
+  chunk(message: string) {
+    this.#chunks.push(message);
+  }
+
   message(message: string) {
-    this.#chunks.push(message + "\n");
+    this.chunk(message + "\n");
   }
 
   close() {
