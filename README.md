@@ -7,7 +7,7 @@ LumeCMS adapter to run with Lume (SSG) in a VPS easily.
 - In your Lume project directory, make sure the files `_config.ts` and `_cms.ts`
   exists.
 - Run
-  `deno serve -Ar https://cdn.jsdelivr.net/gh/lumeland/lume-cms-adapter@latest/mod.ts`.
+  `deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts`.
 
 This starts a Deno server under the port `8000` (see
 [deno serve](https://docs.deno.com/runtime/reference/cli/serve/) to learn how to
@@ -21,7 +21,7 @@ reverse proxy (8000) <-- on demand server (3000)
 You can change the port of the proxy server with the `--port` flag:
 
 ```sh
-deno serve -Ar https://cdn.jsdelivr.net/gh/lumeland/lume-cms-adapter@latest/mod.ts --port=8888
+deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --port=8888
 
 # reverse proxy (8000) <-- on demand server (8888)
 ```
@@ -30,14 +30,14 @@ Use `--show-terminal` to show the terminal output of the Lume build at the cold
 start:
 
 ```sh
-deno serve -Ar https://cdn.jsdelivr.net/gh/lumeland/lume-cms-adapter@latest/mod.ts --show-terminal
+deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --show-terminal
 ```
 
 Use `--` to pass arguments to LumeCMS. For example, if your public URL is
 `https://example.com` and want to configure the Lume site with this location:
 
 ```sh
-deno serve -Ar https://cdn.jsdelivr.net/gh/lumeland/lume-cms-adapter@latest/mod.ts --port=8888 -- --location=https://example.com
+deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --port=8888 -- --location=https://example.com
 
 # reverse proxy (8000) <-- on demand server (8888) --location=https://example.com
 ```
