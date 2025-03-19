@@ -112,8 +112,8 @@ export function getServeHandler(): Deno.ServeHandler {
     console.log(`Start proxied server on port ${port}`);
 
     const command = new Deno.Command(Deno.execPath(), {
-      stdout: "piped",
-      stderr: "piped",
+      stdout: showTerminal ? "piped" : "inherit",
+      stderr: showTerminal ? "piped" : "inherit",
       args: [
         "eval",
         "--unstable-kv",
@@ -135,7 +135,7 @@ export function getServeHandler(): Deno.ServeHandler {
     };
 
     process.process.status.then((status) => {
-      if (status.success === false) {
+      if (status.success === false && status.signal !== "SIGTERM") {
         process!.error = true;
       }
     });
@@ -166,6 +166,8 @@ export function getServeHandler(): Deno.ServeHandler {
       }
     }
 
+    console.log("CMS started");
+
     // Start the WebSocket server
     const socket = new WebSocket(
       `ws://${location.hostname}:${port}${adminPath}/_socket`,
@@ -188,8 +190,16 @@ export function getServeHandler(): Deno.ServeHandler {
 
   // Close the server
   function closeServer() {
-    process?.process.kill();
-    ws?.close();
+    try {
+      process?.process.kill();
+    } catch {
+      // The process is already dead
+    }
+    try {
+      ws?.close();
+    } catch {
+      // The WebSocket is already closed
+    }
     process = undefined;
     ws = undefined;
     sockets.clear();
@@ -243,7 +253,11 @@ class BodyStream {
           }
           if (this.#closed) {
             clearInterval(this.#timer);
-            controller.close();
+            try {
+              controller.close();
+            } catch {
+              // The stream controller cannot close or enqueue
+            }
           }
         }, 100);
       },
