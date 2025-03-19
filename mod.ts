@@ -140,7 +140,7 @@ export function getServeHandler(): Deno.ServeHandler {
       }
     });
 
-    body.message("Building the Lume site...");
+    body.chunk("Building the site...");
 
     if (showTerminal) {
       body.readStd(process.process.stdout);
@@ -154,7 +154,9 @@ export function getServeHandler(): Deno.ServeHandler {
         return;
       }
 
-      body.chunk(".");
+      if (!showTerminal) {
+        body.chunk(".");
+      }
 
       try {
         await fetch(`${location.protocol}//${location.hostname}:${port}`);
