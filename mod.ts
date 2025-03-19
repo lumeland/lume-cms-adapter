@@ -108,7 +108,6 @@ export function getServeHandler(): Deno.ServeHandler {
       return;
     }
 
-    body.message("Starting CMS...");
     console.log(`Start proxied server on port ${port}`);
 
     const command = new Deno.Command(Deno.execPath(), {
