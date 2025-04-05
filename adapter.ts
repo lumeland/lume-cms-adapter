@@ -1,9 +1,10 @@
-import { parseArgs } from "jsr:@std/cli@1.0.14/parse-args";
+import { parseArgs } from "jsr:@std/cli@1.0.15/parse-args";
 import { type Context, Hono, Next, serveStatic } from "lume/cms/deps/hono.ts";
 import authRoutes from "lume/cms/core/routes/auth.ts";
 import { dispatch } from "lume/cms/core/utils/event.ts";
 import { asset, getPath } from "lume/cms/core/utils/path.ts";
 import { relative } from "lume/cms/deps/std.ts";
+import { setEnv } from "lume/core/utils/env.ts";
 
 import type Site from "lume/core/site.ts";
 import type Cms from "lume/cms/core/cms.ts";
@@ -27,7 +28,8 @@ export default async function adapter(userOptions?: Options): Promise<Hono> {
   const { site, cms, basePath } = options;
 
   // Enable drafts previews in the CMS
-  Deno.env.set("LUME_DRAFTS", "true");
+  setEnv("LUME_DRAFTS", "true");
+  setEnv("LUME_CMS", "true");
 
   await site.build();
 
@@ -118,8 +120,7 @@ export default async function adapter(userOptions?: Options): Promise<Hono> {
 
   app.notFound(() => {
     const notFoundUrl = site.options.server?.page404;
-    // deno-lint-ignore no-explicit-any
-    const page = site.pages.find((p: any) =>
+    const page = site.pages.find((p) =>
       p.data.url === notFoundUrl || p.outputPath === notFoundUrl
     );
 

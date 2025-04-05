@@ -1,4 +1,4 @@
-import { parseArgs } from "jsr:@std/cli@1.0.14/parse-args";
+import { parseArgs } from "jsr:@std/cli@1.0.15/parse-args";
 
 // We need to eval the code instead of running it to keep the same cwd
 const code = await (await fetch(import.meta.resolve("./adapter.ts"))).text();

@@ -2,7 +2,7 @@
   "lock": false,
   "imports": {
     "lume/": "https://deno.land/x/lume@v2.5.3/",
-    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.10.2/"
+    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.11.1/"
   },
   "tasks": {
     "update-deps": {
