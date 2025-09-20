@@ -27,6 +27,15 @@ configure it with this option:
 deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --port=3001
 ```
 
+### `--hostname`
+
+If the proxied server is in on a different hostname (by default is `localhost`),
+you can configure it with this option:
+
+```sh
+deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --hostname=0.0.0.0
+```
+
 ### `--show-terminal`
 
 Show the terminal output of the Lume build at the cold start:
