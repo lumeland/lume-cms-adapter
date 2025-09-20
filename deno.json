@@ -1,8 +1,8 @@
 {
   "lock": false,
   "imports": {
-    "lume/": "https://deno.land/x/lume@v2.5.3/",
-    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.11.1/"
+    "lume/": "https://deno.land/x/lume@v3.0.9/",
+    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@v0.13.0-beta.1/"
   },
   "tasks": {
     "update-deps": {
@@ -12,5 +12,12 @@
   },
   "exclude": [
     "CHANGELOG.md"
-  ]
+  ],
+  "lint": {
+    "rules": {
+      "exclude": [
+        "no-import-prefix"
+      ]
+    }
+  }
 }

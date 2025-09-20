@@ -1,29 +1,24 @@
-import { parseArgs } from "jsr:@std/cli@1.0.15/parse-args";
-
-// We need to eval the code instead of running it to keep the same cwd
-const code = await (await fetch(import.meta.resolve("./adapter.ts"))).text();
+import { parseArgs } from "jsr:@std/cli@1.0.22/parse-args";
+import { stripAnsiCode } from "jsr:@std/fmt@1.0.8/colors";
 
 // Capture flags to pass to the server
 const flags = parseArgs(Deno.args, {
-  "--": true,
-  string: ["port", "adminPath"],
+  string: ["port", "hostname"],
   boolean: ["show-terminal"],
   default: {
     port: "3000",
-    adminPath: "/admin",
+    hostname: "localhost",
     showTerminal: false,
   },
 });
 
 export function getServeHandler(): Deno.ServeHandler {
-  const { port, adminPath, "show-terminal": showTerminal } = flags;
+  const { port, hostname, "show-terminal": showTerminal } = flags;
 
   let process:
     | { process: Deno.ChildProcess; ready: boolean; error: boolean }
     | undefined;
-  let ws: WebSocket | undefined;
   let timeout: number | undefined;
-  const sockets = new Set<WebSocket>();
 
   return async function (request: Request): Promise<Response> {
     const url = new URL(request.url);
@@ -51,7 +46,7 @@ export function getServeHandler(): Deno.ServeHandler {
         pre {
           overflow-x: auto;
         }
-        </style></head><body><pre><samp>Starting LumeCMS...`);
+        </style></head><body><pre><samp>Initializing. Please wait...`);
 
       startServer(url, body).then(() => {
         if (process?.error) {
@@ -114,16 +109,14 @@ export function getServeHandler(): Deno.ServeHandler {
       stdout: showTerminal ? "piped" : "inherit",
       stderr: showTerminal ? "piped" : "inherit",
       args: [
-        "eval",
-        "--unstable-kv",
-        code,
-        // Lume flags
-        "--",
-        ...flags["--"],
-        // Server flags
-        "--",
+        "task",
+        "lume",
+        "--serve",
+        "--proxied",
+        "--cms",
         `--port=${port}`,
-        `--hostname=${location.hostname}`,
+        `--hostname=${hostname}`,
+        `--location=${location.origin}`,
       ],
     });
 
@@ -158,7 +151,7 @@ export function getServeHandler(): Deno.ServeHandler {
       }
 
       try {
-        await fetch(`${location.protocol}//${location.hostname}:${port}`);
+        await fetch(`http://${hostname}:${port}`);
         process.ready = true;
         break;
       } catch {
@@ -166,27 +159,6 @@ export function getServeHandler(): Deno.ServeHandler {
         await new Promise((resolve) => setTimeout(resolve, timeout));
       }
     }
-
-    console.log("CMS started");
-
-    // Start the WebSocket server
-    const socket = new WebSocket(
-      `ws://${location.hostname}:${port}${adminPath}/_socket`,
-    );
-
-    socket.onmessage = (event) => {
-      for (const socket of sockets) {
-        socket.send(event.data);
-      }
-    };
-
-    return await new Promise((resolve, reject) => {
-      socket.onopen = () => {
-        ws = socket;
-        resolve();
-      };
-      socket.onerror = reject;
-    });
   }
 
   // Close the server
@@ -196,30 +168,21 @@ export function getServeHandler(): Deno.ServeHandler {
     } catch {
       // The process is already dead
     }
-    try {
-      ws?.close();
-    } catch {
-      // The WebSocket is already closed
-    }
+
     process = undefined;
-    ws = undefined;
-    sockets.clear();
   }
 
   // Proxy the WebSocket connection
   function proxyWebSocket(request: Request) {
     const { socket, response } = Deno.upgradeWebSocket(request);
+    const { pathname } = new URL(request.url);
+    const origin = new WebSocket(`ws://${hostname}:${port}${pathname}`);
 
-    socket.onmessage = (event) => {
-      ws?.send(event.data);
-    };
-
-    socket.onopen = () => {
-      sockets.add(socket);
-    };
-
-    socket.onclose = () => {
-      sockets.delete(socket);
+    origin.onopen = () => {
+      socket.onmessage = (event) => origin.send(event.data);
+      origin.onmessage = (event) => socket.send(event.data);
+      socket.onclose = () => origin.close();
+      origin.onclose = () => socket.close();
     };
 
     return response;
@@ -272,12 +235,7 @@ class BodyStream {
     stream.pipeThrough(new TextDecoderStream()).pipeTo(
       new WritableStream({
         write: (chunk) => {
-          // Remove ANSI escape codes (https://stackoverflow.com/questions/25245716/remove-all-ansi-colors-styles-from-strings)
-          chunk = chunk.replaceAll(
-            /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
-            "",
-          );
-          this.chunk(chunk);
+          this.chunk(stripAnsiCode(chunk));
         },
       }),
     );
