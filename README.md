@@ -13,8 +13,17 @@ A simple proxy to run LumeCMS in a VPS easily on demand.
 
 ## Usage
 
-In the Lume project, run
-`deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts`.
+Add this entry to your import map:
+
+```json
+{
+  "imports": {
+    "lume_cms_adapter": "https://deno.land/x/lume_cms_adapter@v0.3.0/mod.ts"
+  }
+}
+```
+
+In the Lume project, run `deno serve -A lume_cms_adapter`.
 
 ## Configuration
 
@@ -24,7 +33,7 @@ If the proxied server is in on a different port (by default is `3000`), you can
 configure it with this option:
 
 ```sh
-deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --port=3001
+deno serve -A lume_cms_adapter --port=3001
 ```
 
 ### `--hostname`
@@ -33,7 +42,7 @@ If the proxied server is in on a different hostname (by default is `localhost`),
 you can configure it with this option:
 
 ```sh
-deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --hostname=0.0.0.0
+deno serve -A lume_cms_adapter --hostname=0.0.0.0
 ```
 
 ### `--show-terminal`
@@ -41,5 +50,5 @@ deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --hostname=0.0.0.0
 Show the terminal output of the Lume build at the cold start:
 
 ```sh
-deno serve -Ar https://deno.land/x/lume_cms_adapter/mod.ts --show-terminal
+deno serve -A lume_cms_adapter --show-terminal
 ```
