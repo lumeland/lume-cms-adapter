@@ -140,7 +140,7 @@ export function getServeHandler(): Deno.ServeHandler {
     }
 
     // Wait for the server to start
-    let timeout = 0;
+    const timeout = 1000;
     while (true) {
       if (process.error) {
         return;
@@ -155,7 +155,6 @@ export function getServeHandler(): Deno.ServeHandler {
         process.ready = true;
         break;
       } catch {
-        timeout += 1000;
         await new Promise((resolve) => setTimeout(resolve, timeout));
       }
     }

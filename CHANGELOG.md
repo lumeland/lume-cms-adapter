@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.3.0] - Unreleased
 ### Changed
-- BREAKING: Adapted to LumeCMS 0.13
+- BREAKING: Adapted to Lume CMS 0.13
 
 ## [0.2.2] - 2025-04-05
 ### Fixed
