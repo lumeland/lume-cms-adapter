@@ -1,15 +1,14 @@
-# LumeCMS Adapter proxy
+# LumeCMS adapter proxy
 
 A simple proxy to run LumeCMS in a VPS easily on demand.
 
-- This script opens a permanent server under the port `8000` (configurable).
-- On the first request, the script runs `deno task lume --serve --proxied ...`
-  (also configurable). This initializes the Lume's dev server in the port
-  `3000`.
-- Once the Lume's server is running, this scripts works as a reverse proxy,
+- This script opens a permanent server on the port `8000` (configurable).
+- On the first request, the script runs `deno task lume --serve ...`. This
+  initializes the Lume's dev server on the port `3000`.
+- While the Lume's server is running, this script works as a reverse proxy,
   forwarding all the client's request to the Lume's server.
-- After 2 hours of inactivity, the Lume's server is closed. It will be created
-  again on the next request.
+- After 2 hours of inactivity, the Lume's server is closed, waiting to be
+  created again on the next request.
 
 ## Usage
 
